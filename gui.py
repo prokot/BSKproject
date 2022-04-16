@@ -47,9 +47,19 @@ class GUI:
         frame_bttns.pack(fill=tk.BOTH,side=tk.LEFT,expand=True)
         
         self.window.bind("<Key>", self.keyPressHandler)
-
-
+        pswrd_wind = tk.Tk()
+        pswrd_wind.geometry("+"+str(self.window.winfo_x() + int(self.window.winfo_width()/2)) +"+" + str(self.window.winfo_y() + int(self.window.winfo_height()/2)))
+        pswrd_label = tk.Label(pswrd_wind,text="Enter password:").pack()
+        pswrd_entry = tk.Entry(pswrd_wind)
+        pswrd_entry.pack()
+        pswrd_bttn = tk.Button(pswrd_wind,text="Ok",command = lambda: self.pwdDestroy(pswrd_wind,pswrd_entry.get())).pack()
+        self.pwd_window = pswrd_wind
         
+
+    def pwdDestroy(self,window,pwd):
+        window.destroy()
+        self.app.crypto.generateLocalKey(pwd)
+
 
     def writeMsg(self, msg):
         self.msgCnt += 1
@@ -77,8 +87,7 @@ class GUI:
         #return fileName
 
     def mainLoop(self):
-        
-
         self.window.mainloop()
+        self.pwd_window.mainloop()
 
 
