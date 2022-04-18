@@ -2,6 +2,7 @@ from fileinput import filename
 import tkinter as tk
 from tkinter import DISABLED, filedialog
 from os.path import expanduser
+import os
 from tkinter.font import NORMAL
 import network as ntwrk
 from _thread import *
@@ -26,7 +27,6 @@ class GUI:
         frame_log = tk.Frame(name ="frame_log")
 
         text_log = tk.Text(master = frame_log, background="black",foreground="white",name="text")
-        text_log.insert(tk.END,"Sample text.")
         text_log.config(state=DISABLED)
         text_log.pack(fill=tk.BOTH,expand=True)
 
@@ -41,25 +41,30 @@ class GUI:
         frame_bttns = tk.Frame()
 
         sendBttn = tk.Button(text="Send",master=frame_bttns,command = lambda: self.sendMsg(textField.get())).pack(fill=tk.BOTH)
-        fileBttn = tk.Button(text="Choose file",master=frame_bttns, command = self.fileBrowser).pack(fill=tk.BOTH)
+        fileBttn = tk.Button(text="Choose file",master=frame_bttns, command = lambda : start_new_thread(self.fileBrowser)).pack(fill=tk.BOTH)
 
         frame_entry.pack(fill=tk.BOTH,expand=True,side=tk.LEFT)
         frame_bttns.pack(fill=tk.BOTH,side=tk.LEFT,expand=True)
         
         self.window.bind("<Key>", self.keyPressHandler)
-        pswrd_wind = tk.Tk()
-        pswrd_wind.geometry("+"+str(self.window.winfo_x() + int(self.window.winfo_width()/2)) +"+" + str(self.window.winfo_y() + int(self.window.winfo_height()/2)))
-        pswrd_label = tk.Label(pswrd_wind,text="Enter password:").pack()
-        pswrd_entry = tk.Entry(pswrd_wind)
-        pswrd_entry.pack()
-        pswrd_bttn = tk.Button(pswrd_wind,text="Ok",command = lambda: self.pwdDestroy(pswrd_wind,pswrd_entry.get())).pack()
-        self.pwd_window = pswrd_wind
+
+        # pswrd_wind = tk.Tk()
+        # pswrd_wind.geometry("+"+str(self.window.winfo_x() + int(self.window.winfo_width()/2)) +"+" + str(self.window.winfo_y() + int(self.window.winfo_height()/2)))
+        # pswrd_label = tk.Label(pswrd_wind,text="Enter password:").pack()
+        # pswrd_entry = tk.Entry(pswrd_wind)
+        # pswrd_entry.pack()
+        # pswrd_bttn = tk.Button(pswrd_wind,text="Ok",command = lambda: self.pwdDestroy(pswrd_wind,pswrd_entry.get())).pack()
+        # self.pwd_window = pswrd_wind
         
 
     def pwdDestroy(self,window,pwd):
         window.destroy()
         self.app.crypto.generateLocalKey(pwd)
 
+    def writeChar(self,char):
+        self.window.nametowidget("frame_log").nametowidget("text").config(state=NORMAL)
+        self.window.nametowidget("frame_log").nametowidget("text").insert(tk.END,char)
+        self.window.nametowidget("frame_log").nametowidget("text").config(state=DISABLED)
 
     def writeMsg(self, msg):
         self.msgCnt += 1
@@ -68,7 +73,7 @@ class GUI:
         self.window.nametowidget("frame_log").nametowidget("text").config(state=DISABLED)
 
     def sendMsg(self,msg):
-        self.writeMsg(msg)
+        self.writeMsg("You>" + msg)
         self.window.nametowidget("frame_entry").nametowidget("entry_field").delete(0,tk.END)
         self.app.ntwrk.send(msg)
 
@@ -83,11 +88,28 @@ class GUI:
             ("Png files","*.png"),
             ("Pdf files","*.pdf"),
             ("Avi files","*.avi")))
-        self.writeMsg("Wybrano plik: " + fileName)
-        #return fileName
+        self.writeMsg("File : " + fileName)
+        start_new_thread(self.app.ntwrk.sendFile,(fileName,))
+        self.writeMsg("Sending file...")
+        if(os.stat(fileName).st_size >= 500000000):
+            self.writeMsg("[")
+            cnt = 1
+            while True:
+                progress = self.app.ntwrk.sendProgress
+                if(progress == cnt):
+                    self.writeChar("=")
+                    cnt += 1
+                if(cnt == 11):
+                    break
+            self.writeChar("]")
+        self.writeMsg("Transfer completed.")
+        
+        
+        #self.app.ntwrk.sendFile(r"C:\Users\harmi\Downloads\Joy Division   Greatest Hits-YTConverter.app.avi")
 
     def mainLoop(self):
+        self.app.crypto.generateLocalKey("siema")
         self.window.mainloop()
-        self.pwd_window.mainloop()
+        #self.pwd_window.mainloop()
 
 
