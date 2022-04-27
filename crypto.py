@@ -17,7 +17,7 @@ class Crpto:
             random_gen = Random.new().read
             key = RSA.generate(2048,random_gen)
             self.public = key.public_key().exportKey()
-            self.private = key.exportKey()
+            self.private = key
             
             
 
@@ -46,7 +46,7 @@ class Crpto:
             with open(self.app.port +'/private/private_key.txt','w+') as pvKey:
                 self.cipher = AES.new(hash_obj.digest(),AES.MODE_CBC)
                 pvKey.write(b64encode(self.cipher.iv).decode('ascii') + "\n")
-                pvKey.write(b64encode(self.cipher.encrypt(pad(self.private,AES.block_size))).decode('ascii'))
+                pvKey.write(b64encode(self.cipher.encrypt(pad(self.private.exportKey(),AES.block_size))).decode('ascii'))
                 pvKey.close()
 
     def generateSesKey(self):

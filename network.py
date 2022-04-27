@@ -6,8 +6,14 @@ from time import sleep
 import gui
 from main import App
 from Crypto.Cipher import AES
-import pickle as plk
+import pickle as pkl
 import os
+
+
+#TODO:
+# -Very slow transfer of sliced files, with progress bar added. 
+# I used a lot of threads to do that and it's still very slow
+# -Add connection closing when exiting the app.
 
 class P2P:
     
@@ -34,10 +40,9 @@ class P2P:
         data = self.app.crypto.encryptDataCBC(data,self.app.crypto.session)
         data["ext"] = ext
         data["filename"] = filename
-        data = plk.dumps(data)
+        data = pkl.dumps(data)
         leng = len(data) + 10
         self.socket.send(leng.to_bytes(4,'little'))
-        #self.socket.send(data)
         global cnt 
         cnt = 0
         prg = leng/self.maxPacketSize
@@ -54,7 +59,6 @@ class P2P:
         else: 
             self.socket.send(data)
         self.sendProgress = 0
-        sleep(0.00000002)
 
     def calculateProgressXD(self,prg):          # XD
         while self.sendProgress < 11:
@@ -62,10 +66,9 @@ class P2P:
 
 
     def send(self,msg):
-        #data = self.app.crypto.decryptData(self.app.crypto.encryptData(msg.encode('ascii')))
         data = self.app.crypto.encryptDataCBC(msg.encode('ascii'),self.app.crypto.session)
         data["ext"] = "string"
-        data = plk.dumps(data)
+        data = pkl.dumps(data)
         leng = len(data)
         self.socket.send(leng.to_bytes(4,'little'))
         self.socket.send(data)
@@ -77,18 +80,14 @@ class P2P:
             dataLen = int.from_bytes(dataLen,"little")
             data = []
             for x in range(int(dataLen/self.maxPacketSize)+1):
-            #while True:
                 r, _, _ = select([c], [], [])
                 if not r:
                     break
                 packet = c.recv(self.maxPacketSize)
                 data.append(packet)
-                #sleep(0.1)
 
-            # data = c.recv(dataLen)
-            # leng = len(data)
             data = b"".join(data)
-            data = plk.loads(data)
+            data = pkl.loads(data)
             ext = data["ext"]
             if not ext == "string":
                 filename = data["filename"]
@@ -98,8 +97,6 @@ class P2P:
             if(ext == "string"): 
                 self.app.ui.writeMsg(str(self.connectPort) + ">" + data.decode('ascii'))
             else:
-                # with open(os.getcwd()+ filename+ext,'w+') as file:
-                #     file.close()
                 with open(str(self.bindPort)+ "/" + filename+ext,'wb+') as file:
                     try:
                         file.write(data)
