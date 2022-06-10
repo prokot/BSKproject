@@ -78,3 +78,19 @@ class Crpto:
             return pt
         except (ValueError, KeyError):
             print("Incorrect decryption")
+
+    def encryptDataECB(self,data,key):
+        cipher = AES.new(key, AES.MODE_ECB)
+        ct_bytes = cipher.encrypt(pad(data, AES.block_size))
+        ct = b64encode(ct_bytes).decode('utf-8')
+        return {'ciphertext':ct}
+
+    def decryptDataECB(self,data,key):
+        try:
+            b64 = data
+            ct = b64decode(b64['ciphertext'])
+            cipher = AES.new(key, AES.MODE_ECB)
+            pt = unpad(cipher.decrypt(ct), AES.block_size)
+            return pt
+        except (ValueError, KeyError):
+            print("Incorrect decryption")
